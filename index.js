@@ -50,6 +50,13 @@ client.connect(err => {
         const name = req.body.name;
         const email = req.body.email;
         console.log(name, email, file);
+        file.mv(`${__dirname}/doctors/${file.name}`, err => {
+            if(err){
+                console.log(err);
+                return res.status(500).send({msg: 'Failed to upload Image in server'});
+            }
+            return res.send({name: file.name, path: `/${file.name}`})
+        })
     })
 
 });
