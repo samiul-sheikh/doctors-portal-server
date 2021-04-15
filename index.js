@@ -24,6 +24,7 @@ app.get('/', (req, res) => {
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 client.connect(err => {
     const appointmentCollection = client.db("doctorsPortal").collection("appointments");
+    const doctorCollection = client.db("doctorsPortal").collection("doctors");
 
     app.post('/addAppointment', (req, res) => {
         const appointment = req.body;
@@ -44,20 +45,33 @@ client.connect(err => {
             })
     })
 
-    // doctor added api
+    // add doctor api & send information to server
     app.post('/addDoctor', (req, res) => {
         const file = req.files.file;
         const name = req.body.name;
         const email = req.body.email;
         console.log(name, email, file);
         file.mv(`${__dirname}/doctors/${file.name}`, err => {
-            if(err){
+            if (err) {
                 console.log(err);
-                return res.status(500).send({msg: 'Failed to upload Image in server'});
+                return res.status(500).send({ msg: 'Failed to upload Image in server' });
             }
-            return res.send({name: file.name, path: `/${file.name}`})
+            // return res.send({name: file.name, path: `/${file.name}`})
         })
+        doctorCollection.insertOne({ name, email, image: file.name })
+            .then(result => {
+                res.send(result.insertedCount > 0);
+                // res.send({count: result.InsertedCount});
+            })
     })
+
+    // display information in doctors components
+    app.get('/doctors', (req, res) => {
+        doctorCollection.find({})
+            .toArray((err, documents) => {
+                res.send(documents);
+            })
+    });
 
 });
 
